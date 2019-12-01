@@ -1,0 +1,21 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# database
+*.db
+
+# Distribution / packaging
+.Python
+.idea/
+venv/
+
+.cache/
+
+# tar files
+*.tar
+*.xlsx
+data.csv
+
+.venv_pure
+.venv
