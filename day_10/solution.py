@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import List, Dict
 
@@ -27,6 +29,7 @@ INPUT = (".###..#......###..#...#\n"
          ".#.#.#.##.##########..#\n"
          "#####.##......#.#.####.")
 POINT_SYMBOL = '#'
+NUMBER_TO_DESTROY = 200
 
 
 @dataclass
@@ -88,6 +91,26 @@ def get_asteroid_rank(asteroids: List[Point]) -> Dict[Point, int]:
 def get_best_observe(asteroids: List[Point]) -> int:
     ranks = get_asteroid_rank(asteroids)
     return max(ranks.values())
+
+
+def get_direction_rank(asteroids: List[Point], station: Point) -> Dict[Vector, int]:
+    vectors = defaultdict(int)
+    for ast in asteroids:
+        if ast == station:
+            continue
+        vector = Vector.from_asteroids(ast, station)
+        vectors[vector] += 1
+    return vectors
+
+
+def sort_vectors(direction_rank: Dict[Vector, int]) -> List[Vector]:
+    return list(
+        sorted(direction_rank, key=lambda x: math.atan2(x.dy, x.dx))
+    )
+
+
+def destroy_asteroids(direction_rank: Dict[Vector, int], number_to_destroy: int) -> Point:
+    pass
 
 
 def main():

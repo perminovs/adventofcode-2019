@@ -1,6 +1,8 @@
 import pytest
 
-from day_10.solution import Vector, Point, get_asteroid_rank, get_best_observe
+from day_10.solution import (
+    Vector, Point, get_asteroid_rank, get_direction_rank, sort_vectors,
+    destroy_asteroids, NUMBER_TO_DESTROY)
 
 
 @pytest.mark.parametrize('a1, a2, expected_line', [
@@ -149,3 +151,82 @@ def test_get_best_observe(raw, expected_asteroid, expected_count):
     rank = get_asteroid_rank(asteroids)
     assert max(rank.values()) == expected_count
     assert rank[expected_asteroid] == expected_count
+
+
+@pytest.mark.parametrize('raw, station, expected', [
+    (
+        "#\n"
+        ".\n"
+        "#\n"
+        "#\n",
+        Point(0, 0),
+        {
+            Vector(0, 1): 2,
+        },
+    ),
+    (
+        "#..\n"
+        ".##\n"
+        "#.#\n"
+        "#..\n",
+        Point(0, 0),
+        {
+            Vector(0, 1): 2,
+            Vector(0.707107, 0.707107): 2,
+            Vector(0.894427, 0.447214): 1,
+        },
+    ),
+])
+def test_direction_rank(raw, station: Point, expected):
+    asteroids = Point.from_raw(raw)
+    assert get_direction_rank(asteroids, station) == expected
+
+
+@pytest.mark.parametrize('vectors, expected', [
+    (
+        {
+            Vector(0, 1): 2,
+            Vector(0.894427, 0.447214): 1,
+            Vector(0.707107, 0.707107): 2,
+        },
+        [
+            Vector(0.894427, 0.447214),
+            Vector(0.707107, 0.707107),
+            Vector(0, 1),
+        ]
+    ),
+])
+def test_sort_directions(vectors, expected):
+    assert sort_vectors(vectors) == expected
+
+
+@pytest.mark.parametrize('raw, station, last', [
+    (
+        ".#..##.###...#######\n"
+        "##.############..##.\n"
+        ".#.######.########.#\n"
+        ".###.#######.####.#.\n"
+        "#####.##.#.##.###.##\n"
+        "..#####..#.#########\n"
+        "####################\n"
+        "#.####....###.#.#.##\n"
+        "##.#################\n"
+        "#####.##.###..####..\n"
+        "..######..##.#######\n"
+        "####.##.####...##..#\n"
+        ".#####..#.######.###\n"
+        "##...#.##########...\n"
+        "#.##########.#######\n"
+        ".####.#.###.###.#.##\n"
+        "....##.##.###..#####\n"
+        ".#.#.###########.###\n"
+        "#.#.#.#####.####.###\n"
+        "###.##.####.##.#..##\n",
+        Point(11, 13),
+        Point(8, 2),
+    )
+])
+def test_destroy_asteroids(raw, station, last):
+    asteroids = Point.from_raw(raw)
+    rank = get_direction_rank(asteroids, station)
+    assert destroy_asteroids(rank, NUMBER_TO_DESTROY) == last
