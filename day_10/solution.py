@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
+from itertools import cycle
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List, Dict, Iterator, Iterable, Optional
 
 INPUT = (".###..#......###..#...#\n"
          "#.#..#.##..###..#...#.#\n"
@@ -36,9 +37,13 @@ NUMBER_TO_DESTROY = 200
 class Point:
     x: int
     y: int
+    name: Optional[str] = None
 
     def __hash__(self):
         return hash((self.x, self.y))
+
+    def __repr__(self):
+        return self.name or f'<x={self.x}, y={self.y}>'
 
     @classmethod
     def from_raw(cls, raw: str) -> List[Point]:
@@ -48,6 +53,9 @@ class Point:
                 if value == POINT_SYMBOL:
                     result.append(cls(x, y))
         return result
+
+    def dist_from(self, other: Point) -> float:
+        return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
 
 
 @dataclass
@@ -71,6 +79,24 @@ class Vector:
 
         return cls(dx, dy)
 
+    @property
+    def angle(self) -> float:
+        # too dirty, yes
+        pure = math.atan2(abs(self.dy), abs(self.dx))
+        res = pure
+        if self.dx >= 0 and self.dy >= 0:  # I
+            res = pure
+        if self.dx <= 0 and self.dy >= 0:  # II
+            res = math.pi - pure
+        if self.dx <= 0 and self.dy <= 0:  # III
+            res = pure + math.pi
+        if self.dx >= 0 and self.dy <= 0:  # IV
+            res = 2 * math.pi - pure
+        ans = res - 3 * math.pi / 2  # move reference system to UP direction
+        while ans < 0:  # for correct ordering (first will be UP vectors)
+            ans += math.pi * 2
+        return ans
+
     def __hash__(self):
         return hash((self.dx, self.dy))
 
@@ -93,29 +119,60 @@ def get_best_observe(asteroids: List[Point]) -> int:
     return max(ranks.values())
 
 
-def get_direction_rank(asteroids: List[Point], station: Point) -> Dict[Vector, int]:
-    vectors = defaultdict(int)
+def get_vector_to_points(
+    asteroids: List[Point], station: Point,
+) -> Dict[Vector, List[Point]]:
+    vectors = defaultdict(list)
     for ast in asteroids:
         if ast == station:
             continue
         vector = Vector.from_asteroids(ast, station)
-        vectors[vector] += 1
+        vectors[vector].append(ast)
+
+    for k in vectors:
+        vectors[k] = list(sorted(
+            vectors[k], key=lambda x: station.dist_from(x), reverse=True,
+        ))
     return vectors
 
 
-def sort_vectors(direction_rank: Dict[Vector, int]) -> List[Vector]:
+def sort_vectors(direction_rank: Iterable[Vector]) -> List[Vector]:
     return list(
-        sorted(direction_rank, key=lambda x: math.atan2(x.dy, x.dx))
+        sorted(direction_rank, key=lambda a: a.angle)
     )
 
 
-def destroy_asteroids(direction_rank: Dict[Vector, int], number_to_destroy: int) -> Point:
-    pass
+def destroy_asteroids(
+    direction_rank: Dict[Vector, List[Point]],
+) -> Iterator[Point]:
+    vectors = sort_vectors(direction_rank)
+    for vector in cycle(vectors):
+        if vector not in direction_rank:
+            continue
+
+        yield direction_rank[vector].pop()
+
+        if not direction_rank[vector]:
+            direction_rank.pop(vector)
+
+        if not direction_rank:
+            return
 
 
 def main():
     asteroids = Point.from_raw(INPUT)
-    print(get_best_observe(asteroids))
+
+    ranks = get_asteroid_rank(asteroids)
+    visible = max(ranks.values())
+    print(visible)
+
+    station, = [a for a, c in ranks.items() if c == visible]
+    rank = get_vector_to_points(asteroids, station)
+
+    for idx, ast in enumerate(destroy_asteroids(rank), start=1):
+        if idx == NUMBER_TO_DESTROY:
+            print(ast.x * 100 + ast.y)
+            break
 
 
 if __name__ == '__main__':
