@@ -1,6 +1,6 @@
 import pytest
 
-from day_14.solution import Reaction, Element, calc_need
+from day_14.solution import Reaction, Element, calc_ore, count_fuel, TRILLION
 
 
 @pytest.mark.parametrize('raw, expected', [
@@ -70,4 +70,24 @@ def test_from_raw(raw, expected):
 ])
 def test_calc_need(raw, expected):
     reactions = [Reaction.from_raw(r) for r in raw.split('\n')]
-    assert calc_need(reactions) == expected
+    assert calc_ore(reactions) == expected
+
+
+@pytest.mark.parametrize('raw, ore_cnt, fuel', [
+    (
+        "157 ORE => 5 NZVS\n"
+        "165 ORE => 6 DCFZ\n"
+        "44 XJWVT, 5 KHKGT, 1 QDVJ, 29 NZVS, 9 GPVTF, 48 HKGWZ => 1 FUEL\n"
+        "12 HKGWZ, 1 GPVTF, 8 PSHF => 9 QDVJ\n"
+        "179 ORE => 7 PSHF\n"
+        "177 ORE => 5 HKGWZ\n"
+        "7 DCFZ, 7 PSHF => 2 XJWVT\n"
+        "165 ORE => 2 GPVTF\n"
+        "3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT",
+        TRILLION,
+        82892753,
+    ),
+])
+def test_count_fuel(raw, ore_cnt, fuel):
+    reactions = [Reaction.from_raw(r) for r in raw.split('\n')]
+    assert count_fuel(reactions, ore_cnt) == fuel

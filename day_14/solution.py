@@ -9,6 +9,7 @@ from day_14.data import RAW
 
 FUEL = 'FUEL'
 ORE = 'ORE'
+TRILLION = 1000000000000
 
 
 @dataclass
@@ -41,12 +42,14 @@ class Reaction:
         return cls(Element(*_parse_input(right)), inputs)
 
 
-def calc_need(reactions: List[Reaction]) -> int:
+def calc_ore(reactions: List[Reaction], cnt: int = 1) -> int:
+    """ How many ORE we need to produce one FUEL?
+    """
     name_to_reaction = {r.output.name: r for r in reactions}
-    return _calc_need(Element(FUEL, 1), name_to_reaction, defaultdict(int))
+    return _calc_ore(Element(FUEL, cnt), name_to_reaction, defaultdict(int))
 
 
-def _calc_need(
+def _calc_ore(
     needed: Element,
     name_to_reaction: Dict[str, Reaction],
     extra: DefaultDict[str, int],
@@ -72,16 +75,48 @@ def _calc_need(
         extra[element.name] = 0
 
         what_produce = Element(element.name, to_produce)
-        ore_needed += _calc_need(what_produce, name_to_reaction, extra)
+        ore_needed += _calc_ore(what_produce, name_to_reaction, extra)
 
     return ore_needed
 
 
-def main():
+def main_p1():
     reactions = [Reaction.from_raw(raw) for raw in RAW.split('\n')]
-    ore = calc_need(reactions)
+    ore = calc_ore(reactions)
     print(ore)
 
 
+def count_fuel(reactions: List[Reaction], ore_cnt: int) -> int:
+    """ What amount of fuel we can produce with <ore_cnt> or ORE?
+    """
+    left = 0
+    right = ore_cnt  # Just suppose. It's not correct for arbitrary case.
+    mid = -1
+    ore = -1
+
+    while left <= right:
+        mid = (right + left) // 2
+        ore = calc_ore(reactions, mid)
+
+        if ore < TRILLION:
+            left = mid + 1
+        elif ore > TRILLION:
+            right = mid - 1
+        else:
+            break
+
+    if ore > ore_cnt:  # one fuel is extra, because we have just ore_cnt ORE
+        mid -= 1
+
+    return mid
+
+
+def main_p2():
+    reactions = [Reaction.from_raw(raw) for raw in RAW.split('\n')]
+    fuel = count_fuel(reactions, TRILLION)
+    print(fuel)
+
+
 if __name__ == '__main__':
-    main()
+    main_p1()
+    main_p2()
