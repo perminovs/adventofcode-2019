@@ -3,8 +3,9 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import List
-from queue import Queue
+from typing import List, Dict, DefaultDict
+
+from day_14.data import RAW
 
 FUEL = 'FUEL'
 ORE = 'ORE'
@@ -42,43 +43,45 @@ class Reaction:
 
 def calc_need(reactions: List[Reaction]) -> int:
     name_to_reaction = {r.output.name: r for r in reactions}
-    name_to_reaction[ORE] = Reaction(output=Element(ORE, 1), input=[])
+    return _calc_need(Element(FUEL, 1), name_to_reaction, defaultdict(int))
 
-    needs = defaultdict(int)
-    needs[FUEL] += 1
 
-    extra = defaultdict(int)
-    produced = defaultdict(int)
-    used = defaultdict(int)
+def _calc_need(
+    needed: Element,
+    name_to_reaction: Dict[str, Reaction],
+    extra: DefaultDict[str, int],
+) -> int:
+    if needed.name == ORE:
+        return needed.cnt
 
-    q = Queue()
-    q.put(name_to_reaction[FUEL])
+    reaction = name_to_reaction[needed.name]
 
-    while not q.empty():
-        reaction = q.get()
+    repeat_cnt = math.ceil(needed.cnt / reaction.output.cnt)
+    produced = repeat_cnt * reaction.output.cnt
+    _extra = produced - needed.cnt
+    if _extra > 0:
+        extra[needed.name] += _extra
 
-        to_produce = needs[reaction.output.name]
-        repeat_cnt = math.ceil(to_produce / reaction.output.cnt)
-        produced[reaction.output.name] += reaction.output.cnt * repeat_cnt
+    ore_needed = 0
+    for element in reaction.input:
+        to_produce = element.cnt * repeat_cnt
+        if extra[element.name] > to_produce:
+            extra[element.name] -= to_produce
+            continue
+        to_produce -= extra[element.name]
+        extra[element.name] = 0
 
-        used[reaction.output.name] += needs[reaction.output.name] + extra[reaction.output.name]
+        what_produce = Element(element.name, to_produce)
+        ore_needed += _calc_need(what_produce, name_to_reaction, extra)
 
-        e = produced[reaction.output.name] - used[reaction.output.name]
-        extra[reaction.output.name] = e
+    return ore_needed
 
-        needs[reaction.output.name] = 0
 
-        for inp in reaction.input:
+def main():
+    reactions = [Reaction.from_raw(raw) for raw in RAW.split('\n')]
+    ore = calc_need(reactions)
+    print(ore)
 
-            diff = extra[inp.name] - needs[inp.name]
 
-            if diff > inp.cnt:
-                extra[inp.name] -= inp.cnt
-                used[inp.name] += inp.cnt
-                needs[inp.name] = 0
-                continue
-            to_produce = inp.cnt - diff
-            needs[inp.name] += to_produce
-            q.put(name_to_reaction[inp.name])
-
-    return produced[ORE]
+if __name__ == '__main__':
+    main()
