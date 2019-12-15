@@ -53,40 +53,32 @@ def calc_need(reactions: List[Reaction]) -> int:
 
     q = Queue()
     q.put(name_to_reaction[FUEL])
+
     while not q.empty():
         reaction = q.get()
-        print(f'производим {reaction.output.name}')
 
-        to_produce = needs[reaction.output.name] - extra[reaction.output.name]
-        print(f'дефицит: {to_produce}')
-        if to_produce > 0:
-            repeat_cnt = math.ceil(to_produce / reaction.output.cnt)
-            produced[reaction.output.name] += reaction.output.cnt * repeat_cnt
+        to_produce = needs[reaction.output.name]
+        repeat_cnt = math.ceil(to_produce / reaction.output.cnt)
+        produced[reaction.output.name] += reaction.output.cnt * repeat_cnt
 
-            used[reaction.output.name] += needs[reaction.output.name] + extra[reaction.output.name]
+        used[reaction.output.name] += needs[reaction.output.name] + extra[reaction.output.name]
 
-            e = produced[reaction.output.name] - used[reaction.output.name]
-            extra[reaction.output.name] = e
+        e = produced[reaction.output.name] - used[reaction.output.name]
+        extra[reaction.output.name] = e
 
-            needs[reaction.output.name] = 0
-        else:
-            print('не производим\n---')
-            continue
-        print(f'produced: {produced}')
-        print(f'extra: {extra}')
-        print(f'needs: {needs}')
-        print(f'used: {used}')
+        needs[reaction.output.name] = 0
 
         for inp in reaction.input:
-            diff = extra[inp.name] - needs[inp.name] - inp.cnt
-            if diff >= 0:
-                print(f'реакция для {inp.name}, есть лишние {diff}')
+
+            diff = extra[inp.name] - needs[inp.name]
+
+            if diff > inp.cnt:
+                extra[inp.name] -= inp.cnt
                 used[inp.name] += inp.cnt
+                needs[inp.name] = 0
                 continue
-            print(f'реакция для {inp.name}, не хватает {-diff}')
-            needs[inp.name] -= diff
+            to_produce = inp.cnt - diff
+            needs[inp.name] += to_produce
             q.put(name_to_reaction[inp.name])
 
-        print(f'needs: {needs}')
-        print('\n---')
     return produced[ORE]

@@ -21,12 +21,12 @@ def test_from_raw(raw, expected):
 
 
 @pytest.mark.parametrize('raw, expected', [
-    # ('1 ORE => 1 FUEL', 1),
-    # ('2 ORE => 1 FUEL', 2),
-    # ('3 ORE => 2 FUEL', 3),
-    # ('1 ORE => 2 FUEL', 1),
-    #
-    # ('10 ORE => 10 A\n7 A => 1 FUEL', 10),
+    ('1 ORE => 1 FUEL', 1),
+    ('2 ORE => 1 FUEL', 2),
+    ('3 ORE => 2 FUEL', 3),
+    ('1 ORE => 2 FUEL', 1),
+
+    ('10 ORE => 10 A\n7 A => 1 FUEL', 10),
 
     (
         "10 ORE => 10 A\n"
@@ -35,7 +35,7 @@ def test_from_raw(raw, expected):
         "7 A, 1 C => 1 D\n"
         "7 A, 1 D => 1 E\n"
         "7 A, 1 E => 1 FUEL",
-        30,
+        31,
     ),
     (
         "9 ORE => 2 A\n"
