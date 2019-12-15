@@ -1,6 +1,9 @@
 import pytest
 
-from day_14.solution import Reaction, Element, calc_ore, count_fuel, TRILLION
+from day_14.main import count_fuel
+from day_14.solution.models import Reaction, Element, TRILLION
+from day_14.solution.via_recursion import calc_ore as rec_calc_ore
+from day_14.solution.via_queue import calc_ore as queue_calc_ore
 
 
 @pytest.mark.parametrize('raw, expected', [
@@ -68,9 +71,11 @@ def test_from_raw(raw, expected):
         2210736,
     ),
 ])
-def test_calc_need(raw, expected):
-    reactions = [Reaction.from_raw(r) for r in raw.split('\n')]
-    assert calc_ore(reactions) == expected
+def test_calc_ore(raw, expected):
+    reactions = Reaction.from_multi_raw(raw)
+    q = queue_calc_ore(reactions)
+    r = rec_calc_ore(reactions)
+    assert q == r == expected
 
 
 @pytest.mark.parametrize('raw, ore_cnt, fuel', [
