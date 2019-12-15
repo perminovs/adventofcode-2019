@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from typing import List
 from queue import Queue
 
+from day_14.data import RAW
+
 FUEL = 'FUEL'
 ORE = 'ORE'
 
@@ -40,7 +42,7 @@ class Reaction:
         return cls(Element(*_parse_input(right)), inputs)
 
 
-def calc_need(reactions: List[Reaction]) -> int:
+def calc_ore(reactions: List[Reaction]) -> int:
     name_to_reaction = {r.output.name: r for r in reactions}
     name_to_reaction[ORE] = Reaction(output=Element(ORE, 1), input=[])
 
@@ -49,7 +51,6 @@ def calc_need(reactions: List[Reaction]) -> int:
 
     extra = defaultdict(int)
     produced = defaultdict(int)
-    used = defaultdict(int)
 
     q = Queue()
     q.put(name_to_reaction[FUEL])
@@ -59,26 +60,34 @@ def calc_need(reactions: List[Reaction]) -> int:
 
         to_produce = needs[reaction.output.name]
         repeat_cnt = math.ceil(to_produce / reaction.output.cnt)
-        produced[reaction.output.name] += reaction.output.cnt * repeat_cnt
 
-        used[reaction.output.name] += needs[reaction.output.name] + extra[reaction.output.name]
+        amount = reaction.output.cnt * repeat_cnt
+        produced[reaction.output.name] += amount
 
-        e = produced[reaction.output.name] - used[reaction.output.name]
-        extra[reaction.output.name] = e
+        if amount > to_produce:
+            extra[reaction.output.name] += amount - to_produce
 
         needs[reaction.output.name] = 0
 
         for inp in reaction.input:
-
-            diff = extra[inp.name] - needs[inp.name]
-
-            if diff > inp.cnt:
-                extra[inp.name] -= inp.cnt
-                used[inp.name] += inp.cnt
-                needs[inp.name] = 0
+            needed_amount = repeat_cnt * inp.cnt
+            if extra[inp.name] > needed_amount:
+                extra[inp.name] -= needed_amount
                 continue
-            to_produce = inp.cnt - diff
-            needs[inp.name] += to_produce
+            else:
+                needed_amount -= extra[inp.name]
+                needs[inp.name] += needed_amount
+                extra[inp.name] = 0
             q.put(name_to_reaction[inp.name])
 
     return produced[ORE]
+
+
+def main_p1():
+    reactions = [Reaction.from_raw(raw) for raw in RAW.split('\n')]
+    ore = calc_ore(reactions)
+    print(ore)
+
+
+if __name__ == '__main__':
+    main_p1()

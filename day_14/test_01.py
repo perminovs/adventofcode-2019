@@ -1,6 +1,6 @@
 import pytest
 
-from day_14.solution import Reaction, Element, calc_need
+from day_14.solution import Reaction, Element, calc_ore
 
 
 @pytest.mark.parametrize('raw, expected', [
@@ -68,6 +68,6 @@ def test_from_raw(raw, expected):
         2210736,
     ),
 ])
-def test_calc_need(raw, expected):
+def test_calc_ore(raw, expected):
     reactions = [Reaction.from_raw(r) for r in raw.split('\n')]
-    assert calc_need(reactions) == expected
+    assert calc_ore(reactions) == expected
